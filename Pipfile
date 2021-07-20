@@ -7,6 +7,8 @@ name = "pypi"
 django = "*"
 pillow = "*"
 django-extensions = "*"
+python-decouple = "*"
+celery = {extras = ["redis"], version = "*"}
 
 [dev-packages]
 
