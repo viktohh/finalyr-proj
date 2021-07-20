@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+;{% load static %}
+{% block title %}Complete Profile{% endblock %}
+ {% block navbar %}
+    <div class="nav-wrapper">
+        <div class="navstyle">
+            <a id="logo" href="{% url 'home'%}">AMS</a>
+          <ul class="menu">
+
+              <li><a href="{% url 'logout' %}">Logout</a></li>
+          </ul>
+        </div>
+    </div>
+
+
+  {% endblock %}
+
+{% block content%}
+
+<h4 id="signup-text">Complete Your Profile</h4>
+<div class="form-container">
+
+    <div class="signup_form custom">
+
+        <form method="POST" action="">
+
+            {% csrf_token %}
+
+            <div class="form-input-field">
+                <label for="school"> School* </label>
+                {{ profile_form.school }}
+            </div>
+
+            <div class="form-input-field">
+                <label for="department"> Department* </label>
+                {{ profile_form.department }}
+            </div>
+            <div class="form-input-field">
+                <label for="department"> Courses* </label>
+                {{ profile_form.courses }}
+            </div>
+            <div class="form-input-field">
+                <label for="gender"> Gender* </label>
+                {{ profile_form.gender }}
+            </div>
+            <div class="form-input-field">
+                <label for="gender"> Role* </label>
+
+                {{ profile_form.role }}
+            </div>
+
+            <div class="form-input-field">
+                <label for="level"> Level </label>
+                {{ profile_form.level }}
+            </div>
+            <div class="form-input-field">
+                <label for="alias"> Alias </label>
+
+                {{ profile_form.alias }}
+            </div>
+            <button class="btn waves-effect waves-light" type="submit" name="signup">Create Profile
+                <i class="material-icons right">send</i>
+            </button>
+        </form>
+
+
+    </div>
+    <div class="signup-illustration">
+        <img src="{% static 'img/sign-up-illustration.svg' %}" alt="Sign up illustration">
+    </div>
+
+</div>
+<script>
+    {% if message %}
+    Materialize.toast('{{ message }}', 2000, 'red');
+    {% endif %}
+</script>
+</div>
+
+{% endblock %}

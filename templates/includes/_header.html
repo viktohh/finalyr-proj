@@ -1,0 +1,15 @@
+<div class="nav-wrapper">
+  <div class="navstyle">
+    <a id="logo" href="{% url 'assignments:index'%}">AMS</a>
+    <ul class="menu">
+      <li><a href="{% url 'assignments:index' %}">Home</a></li>
+      {% if request.user.is_authenticated %}
+      <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
+      {% else %}
+      <li><a href="#">Create student Account</a></li>
+      <li><a href="{% url 'accounts:lecturer_signup' %}">Create lecturer Account</a></li>
+      <li><a href="{% url 'accounts:sign_in' %}">Login</a></li>
+      {% endif %}
+    </ul>
+  </div>
+</div>

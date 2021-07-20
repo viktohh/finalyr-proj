@@ -1,0 +1,35 @@
+{% extends "base.html" %} 
+
+{% block title %}Sign In{% endblock %}
+<!--content-->
+{% block content%}
+<h4 id="signup-text">Welcome back</h4>
+<div class="form-container">
+  <!--  <h5 class="auth-header">Assignment Management System</h5>-->
+  <div class="signin-form">
+    <form method="POST" action="/">
+      {% csrf_token %}
+      {% for field in login %}
+      <label for="{{field.label}}">{{field.label}} </label>
+      {{ field }}
+      {% endfor %}
+      <button class="btn waves-effect waves-light" type="submit" name="login">
+        Log in
+        <i class="material-icons right">send</i>
+      </button>
+    </form>
+    <ul>
+      <li class="forgot-password-link">
+        <a href="#"> Forgot password?</a>
+      </li>
+    </ul>
+  </div>
+  <div class="signup-illustration">
+    <img
+      src="../../static/img/sign-up-illustration.svg"
+      alt="Sign up illustration"
+    />
+  </div>
+</div>
+
+{% endblock %}
