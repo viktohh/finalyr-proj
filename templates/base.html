@@ -6,8 +6,15 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OAS - {% block title %}{% endblock title %}</title>
-    <!-- Compiled and minified CSS -->
-    <link rel="stylesheet" href="{% static 'css/materialize.min.css' %}" />
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <!--Import materialize.css-->
+    <link
+      type="text/css"
+      rel="stylesheet"
+      href="{% static 'css/materialize.min.css' %}"
+      media="screen,projection"
+    />
+
     <link
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
@@ -23,33 +30,57 @@
       media="screen,projection"
     />
   </head>
-  <body>
+  <body class="wrapper">
     {% include 'includes/_header.html' %}
     <!--messages-->
     {% if messages %}
     <!--iterate messages-->
     {% for message in messages %}
-    <div class="materialert {{message.tags}}">
+    <div class="materialert {{message.tags}}" id="materialAlert">
       <div class="material-icons">check</div>
       {{message}}
-      <button type="button" class="close-alert">×</button>
+      <button type="button" class="close-alert" id="closeAlert">×</button>
     </div>
     {% endfor %} {% endif %}
     <!-- content -->
-    {% block content %}{% endblock content %}
+    <div class="main">{% block content %}{% endblock content %}</div>
     <!--footer-->
     {% include 'includes/_footer.html' %}
-    <script src="{% static 'js/jquery.min.js' %}"></script>
     <!-- Compiled and minified JavaScript -->
+
     <script src="{% static 'js/materialize.min.js' %}"></script>
-    <script src="{% static 'js/init.js' %}"></script>
-    <script src="https://use.fontawesome.com/109e5209ed.js"></script>
     <script>
+      $(".dropdown-trigger").dropdown();
+      (function ($) {
+        $(function () {
+          $(".sidenav").sidenav();
+        }); // end of document ready
+      })(jQuery); // end of jQuery name space
+
       $(document).ready(function () {
-        $(".modal").modal();
         $("select").formSelect();
-        $("select").material_select();
+      });
+
+      const csrftoken = $("[name=csrfmiddlewaretoken]").val();
+      if (csrftoken) {
+        function csrfSafeMethod(method) {
+          // these HTTP methods do not require CSRF protection
+          return /^(GET|HEAD|OPTIONS|TRACE)$/.test(method);
+        }
+        $.ajaxSetup({
+          beforeSend: function (xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+              xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+          },
+        });
+      }
+    </script>
+    <script>
+      document.getElementById("closeAlert").addEventListener("click", () => {
+        document.getElementById("materialAlert").style.display = "none";
       });
     </script>
+    {% block js %}{% endblock js %}
   </body>
 </html>

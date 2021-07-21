@@ -1,5 +1,7 @@
-{% extends "base.html" %} 
-
+{% extends "base.html" %}
+<!--static-->
+{% load static %}
+<!--title-->
 {% block title %}Sign In{% endblock %}
 <!--content-->
 {% block content%}
@@ -7,12 +9,19 @@
 <div class="form-container">
   <!--  <h5 class="auth-header">Assignment Management System</h5>-->
   <div class="signin-form">
-    <form method="POST" action="/">
+    <form method="POST" action="">
       {% csrf_token %}
-      {% for field in login %}
+      <!---->
+      <h5>{{msg}}</h5>
+      {% for field in form %}
       <label for="{{field.label}}">{{field.label}} </label>
       {{ field }}
+      <!---->
       {% endfor %}
+      <!---->
+      {% if request.GET.next %}
+      <input type="hidden" name="next" value="{{request.GET.next}}" />
+      {% endif %}
       <button class="btn waves-effect waves-light" type="submit" name="login">
         Log in
         <i class="material-icons right">send</i>
@@ -26,7 +35,7 @@
   </div>
   <div class="signup-illustration">
     <img
-      src="../../static/img/sign-up-illustration.svg"
+      src="{% static 'img/sign-up-illustration.svg' %}"
       alt="Sign up illustration"
     />
   </div>

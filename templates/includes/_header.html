@@ -1,15 +1,59 @@
-<div class="nav-wrapper">
-  <div class="navstyle">
-    <a id="logo" href="{% url 'assignments:index'%}">AMS</a>
-    <ul class="menu">
+<nav class="light-blue lighten-1" role="navigation">
+  <div class="nav-wrapper container">
+    <a
+      id="logo-container"
+      href="{% url 'assignments:index'%}"
+      class="brand-logo"
+      >AMS</a
+    >
+    <ul class="right hide-on-med-and-down">
       <li><a href="{% url 'assignments:index' %}">Home</a></li>
       {% if request.user.is_authenticated %}
+      <li><a href="#!">Dashboard</a></li>
       <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
       {% else %}
-      <li><a href="#">Create student Account</a></li>
-      <li><a href="{% url 'accounts:lecturer_signup' %}">Create lecturer Account</a></li>
       <li><a href="{% url 'accounts:sign_in' %}">Login</a></li>
+      <!-- Dropdown Trigger -->
+      <li>
+        <a class="dropdown-trigger" href="#!" data-target="signupdropdown"
+          >Create Account<i class="material-icons right">arrow_drop_down</i></a
+        >
+      </li>
+      <!-- Dropdown Structure -->
+      <ul id="signupdropdown" class="dropdown-content">
+        <li><a href="{% url 'accounts:student_signup' %}">Student</a></li>
+        <li><a href="{% url 'accounts:lecturer_signup' %}">Lecturer</a></li>
+      </ul>
+
       {% endif %}
     </ul>
+
+    <ul id="nav-mobile" class="sidenav">
+      <li><a href="{% url 'assignments:index' %}">Home</a></li>
+      {% if request.user.is_authenticated %}
+      <li><a href="#!">Dashboard</a></li>
+      <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
+      {% else %}
+      <li><a href="{% url 'accounts:sign_in' %}">Login</a></li>
+      <!-- Dropdown Trigger -->
+      <li>
+        <a
+          class="dropdown-trigger"
+          href="#!"
+          data-target="signupdropdown-mobile"
+          >Create Account<i class="material-icons right">arrow_drop_down</i></a
+        >
+      </li>
+      <!-- Dropdown Structure -->
+      <ul id="signupdropdown-mobile" class="dropdown-content">
+        <li><a href="{% url 'accounts:student_signup' %}">Student</a></li>
+        <li><a href="{% url 'accounts:lecturer_signup' %}">Lecturer</a></li>
+      </ul>
+
+      {% endif %}
+    </ul>
+    <a href="#" data-target="nav-mobile" class="sidenav-trigger"
+      ><i class="material-icons">menu</i></a
+    >
   </div>
-</div>
+</nav>

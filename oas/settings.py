@@ -117,7 +117,19 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "accounts.authentication.EmailAuthBackend",
+    # 'social_core.backends.facebook.FacebookOAuth2',
+    # 'social_core.backends.twitter.TwitterOAuth',
+    # 'social_core.backends.google.GoogleOAuth2',
+]
+
+
 AUTH_USER_MODEL = "accounts.User"
+LOGIN_URL = "accounts:sign_in"
+LOGOUT_URL = "accounts:logout"
+LOGOUT_REDIRECT_URL = "assignments:index"
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
@@ -149,8 +161,24 @@ if DEBUG:
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-CELERY_BROKER_URL = config("REDIS_URL")
-CELERY_RESULT_BACKEND = config("REDIS_URL")
+CELERY_BROKER_URL = config("REDIS_URL", default="")
+CELERY_RESULT_BACKEND = config("REDIS_URL", default="")
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
+
+if DEBUG:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = "smtp.gmail.com"
+    EMAIL_USE_TLS = True
+    EMAIL_USE_SSL = False
+    EMAIL_PORT = 587
+    EMAIL_HOST_USER = "timviktoh@gmail.com"
+    EMAIL_HOST_PASSWORD = "arlrejmxfhipoljz"
+    EMAIL_FROM = "Online Assignment System"
+
+DEFAULT_FROM_EMAIL = "timviktoh@gmail.com"
+
+ADMINS = (("Admin", "timviktoh@gmail.com"),)

@@ -1,55 +1,239 @@
 {% extends "base.html" %}
-{% block title %}Create Account{% endblock %}
+<!--static-->
+{% load static %}
+<!--title-->
+{% block title %}{{page_title}}{% endblock %}
+<!--content-->
 {% block content%}
 
 <h4 id="signup-text">Create an Account</h4>
 <div class="form-container">
+  <!--    Student Sign Up-->
 
+  <div class="signup_form">
+    <form method="POST" action="" class="col s12" id="signup_form">
+      <div class="materialert error" id="materialAlert">
+        <div class="material-icons">report_problem</div>
+        <span id="alertText">Stop</span>
+        <button type="button" class="close-alert" id="closeAlert">×</button>
+      </div>
+      {% csrf_token %}
+      <div class="row">
+        <div class="input-field col s6">
+          <i class="material-icons prefix">account_box</i>
+          <label for="id_username"> Matric No* </label>
+          {{ form.username }}
+          <span class="helper-text username-error"></span>
+        </div>
+        <div class="input-field col s6">
+          <i class="material-icons prefix">email</i>
+          <label for="id_email"> Email* </label>
+          {{ form.email }}
+          <span class="helper-text email-error"></span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col s6">
+          <i class="material-icons prefix">account_circle</i>
+          <label for="id_first_name"> First Name*</label>
+          {{ form.first_name }}
+        </div>
+        <div class="input-field col s6">
+          <i class="material-icons prefix">account_circle</i>
+          <label for="id_last_name">Last Name*</label>
+          {{ form.last_name }}
+        </div>
+      </div>
 
-    <!--    Student Sign Up-->
+      <div class="row">
+        <div class="input-field col s6">
+          <i class="material-icons prefix">grade</i>
+          <label for="id_level">Level </label>
+          {{ form.level }}
+        </div>
+        <div class="input-field col s6">
+          <i class="material-icons prefix">face</i>
+          <label for="id_gender">Gender </label>
+          {{ form.gender }}
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col s6">
+          <i class="material-icons prefix">vpn_key</i>
+          <label for="id_password1">Password* </label>
+          {{ form.password1 }}
+          <span class="helper-text">{{ form.password1.help_text }}</span>
+        </div>
+        <div class="input-field col s6">
+          <i class="material-icons prefix">vpn_key</i>
+          <label for="id_password2">Confirm password* </label>
+          {{ form.password2 }}
+        </div>
+      </div>
 
-    <div class="signup_form">
-        <form method="POST" action="">
-
-            {% csrf_token %}
-
-            <label for="first_name"> First Name*</label>
-            {{ user_form.first_name }}
-
-            <label for="last_name">Last Name*</label>
-            {{ user_form.last_name }}
-
-            <label for="username"> Matric No* </label>
-            {{ user_form.username }}
-
-            <label for="email"> Email* </label>
-            {{ user_form.email }}
-
-            <label for="password">Password* </label>
-
-            {{ user_form.password }}
-
-            <button class="btn waves-effect waves-light" type="submit" name="signup">Sign up
-                <i class="material-icons right">send</i>
-            </button>
-        </form>
-
-
-
-    </div>
-    <div class="signup-illustration">
-        <img src="../../static/img/sign-up-illustration.svg" alt="Sign up illustration">
-    </div>
-
+      <button
+        class="btn waves-effect waves-light btn-large disabled"
+        type="submit"
+        id="signup-btn"
+      >
+        <div class="loader" id="loader">
+          <div class="loading"></div>
+        </div>
+        Sign up
+        <i class="material-icons right">send</i>
+      </button>
+    </form>
+  </div>
+  <div class="signup-illustration">
+    <img
+      src="{% static 'img/sign-up-illustration.svg' %}"
+      alt="Sign up illustration"
+    />
+  </div>
 </div>
 <script>
-    {%
-        if message %}
-    Materialize.toast('{{ message }}', 2000, 'red');
-    {%
-        endif %
-    }
+  {% if message %}
+  Materialize.toast('{{ message }}', 2000, 'red');
+  {% endif %}
 </script>
-</div>
 
 {% endblock %}
+<!--js-->
+
+{% block js %}
+<script>
+  document.getElementById("materialAlert").style.display = "none";
+  const signUpForm = document.getElementById("signup_form");
+  const formElements = document.querySelectorAll(
+    "#signup_form  input, #signup_form  select"
+  );
+  signUpForm.addEventListener("keyup", (event) => {
+    let empty = false;
+    formElements.forEach((element) => {
+      if (element.value === "") {
+        empty = true;
+      }
+    });
+    if (signUpForm.password1.value !== signUpForm.password2.value) {
+      empty = true;
+    }
+    if (empty) {
+      $("#signup-btn").addClass("disabled");
+    } else {
+      $("#signup-btn").removeClass("disabled");
+    }
+  });
+
+  const validateEmail = function (email) {
+    var formData = new FormData();
+    formData.append("email", email);
+    $.ajax({
+      url: "{% url 'accounts:validate_email' %}",
+      type: "POST",
+      dataType: "json",
+      cache: false,
+      processData: false,
+      contentType: false,
+      data: formData,
+      error: function (xhr) {
+        console.error(xhr.statusText);
+      },
+      success: function (res) {
+        if (!res.success) {
+          $(".email-error").css("color", "red");
+          $("#id_email").addClass("invalid");
+          $(".email-error").text(res.msg);
+        } else {
+          $(".email-error").css("color", "green");
+          $("#id_email").removeClass("invalid");
+          $("#id_email").addClass("valid");
+          $(".email-error").text(res.msg);
+        }
+      },
+    });
+  };
+  const validateUsername = function (username) {
+    var formData = new FormData();
+    formData.append("username", username);
+
+    $.ajax({
+      url: "{% url 'accounts:validate_username' %}",
+      type: "POST",
+      dataType: "json",
+      cache: false,
+      processData: false,
+      contentType: false,
+      data: formData,
+      error: function (xhr) {
+        console.error(xhr.statusText);
+      },
+      success: function (res) {
+        if (!res.success) {
+          $(".username-error").css("color", "red");
+          $("#id_username").addClass("invalid");
+          $(".username-error").text(res.msg);
+        } else {
+          $(".username-error").css("color", "green");
+          $("#id_username").removeClass("invalid");
+          $("#id_username").addClass("valid");
+          $(".username-error").text(res.msg);
+        }
+      },
+    });
+  };
+
+  $("#id_username").on("keyup", (event) => {
+    event.preventDefault();
+    const username = event.target.value;
+    validateUsername(username);
+  });
+  $("#id_username").on("change", (event) => {
+    event.preventDefault();
+    const username = event.target.value;
+    validateUsername(username);
+  });
+
+  $("#id_email").on("keyup", (event) => {
+    event.preventDefault();
+    const email = event.target.value;
+    validateEmail(email);
+  });
+  $("#id_email").on("change", (event) => {
+    event.preventDefault();
+    const email = event.target.value;
+    validateEmail(email);
+  });
+  signUpForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (document.getElementById("loader")) {
+      document.getElementById("loader").style.display = "block";
+    }
+    $("#signup-btn").html("Registering...").addClass("disabled");
+    const formData = new FormData(e.target);
+    console.log(formData);
+    $.ajax({
+      url: "{% url 'accounts:student_signup' %}",
+      type: "POST",
+      dataType: "json",
+      data: formData,
+      success: (res) => {
+        if (res.success) {
+          M.toast({ html: `${res.msg}` });
+          window.location.href = `${res.next}`;
+        } else {
+          M.toast({ html: `${res.msg}` });
+          document.getElementById("materialAlert").style.display = "block";
+          $("#alertText").html(`${res.msg}`);
+          // location.reload();
+        }
+      },
+      error: (error) => {
+        console.error(error.responseText);
+      },
+      cache: false,
+      processData: false,
+      contentType: false,
+    });
+  });
+</script>
+{% endblock js %}

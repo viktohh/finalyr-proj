@@ -1,65 +1,174 @@
-from django.shortcuts import render
+import json
 
+from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import get_user_model
-from django.contrib.postgres.search import SearchQuery, SearchVector
-from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.contrib.auth import authenticate, get_user_model, login
+from django.contrib.sites.shortcuts import get_current_site
+from django.core import serializers
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
-from django.urls import reverse
+from django.template.loader import render_to_string
+from django.urls.base import reverse
+from django.utils.encoding import force_bytes, force_text
+from django.utils.html import strip_tags
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+
+from . import tasks, utils
+from .forms import LoginForm, StudentRegistrationForm
+from .tokens import account_activation_token
 
 
+def student_signup(request):
+    form = StudentRegistrationForm(request.POST or None)
+    if request.method == "POST":
+        post_data = request.POST.copy()
+        email = post_data.get("email")
+        username = post_data.get("username").replace("/", "")
+        password = post_data.get("password1")
+
+        if utils.is_valid_email(email):
+            user = get_user_model().objects.create(email=post_data.get("email"))
+        print(
+            utils.is_password_validated(password, user),
+            utils.is_valid_username(username),
+            utils.is_valid_email(email),
+        )
+        if utils.is_password_validated(password, user) and utils.is_valid_username(username):
+            user.set_password(password)
+            user.username = username
+            user.first_name = post_data.get("first_name")
+            user.last_name = post_data.get("last_name")
+            user.level = post_data.get("level")
+            user.gender = post_data.get("gender")
+            user.is_active = False
+
+            user.is_student = True
+
+            user.save()
+            current_site = str(get_current_site(request))
+            fullname = str(post_data.get("first_name")) + " " + str(post_data.get("last_name"))
+            subject = "Please Activate Your Student Account"
+            ctx = {
+                "fullname": fullname,
+                "domain": current_site,
+                "uid": urlsafe_base64_encode(force_bytes(user.pk)),
+                "token": account_activation_token.make_token(user),
+            }
+
+            if settings.DEBUG:
+                tasks.send_email_message.delay(
+                    subject=subject,
+                    template_name="accounts/activation_request.txt",
+                    user_id=user.id,
+                    ctx=ctx,
+                )
+            else:
+                tasks.send_email_message.delay(
+                    subject=subject,
+                    template_name="accounts/activation_request.html",
+                    user_id=user.id,
+                    ctx=ctx,
+                )
+            raw_password = password
+            user = authenticate(username=username, password=raw_password)
+            return JsonResponse(
+                {
+                    "success": True,
+                    "msg": "Your account has been created! You need to verify your email address to be able to log in.",
+                    "next": reverse("accounts:activation_sent"),
+                }
+            )
+        else:
+            get_user_model().objects.get(email=post_data.get("email")).delete()
+            return JsonResponse(
+                {
+                    "success": False,
+                    "msg": "Check your credentials: your password, username, and email! Ensure you adhere to all the specified measures.",
+                }
+            )
+    context = {"page_title": "Student registration", "form": form}
+    return render(request, "accounts/student_signup.html", context)
 
 
 def lecturer_signup(request):
-    # user.is_lecturer = True
-    pass
-
-def student_signup(request):
-    message = ""
-    if request.method == "POST":
-        user_form = UserForm(request.POST)
-        if user_form.is_valid():
-            username = user_form.cleaned_data["username"]
-            email = user_form.cleaned_data["email"]
-            if get_user_model().objects.filter(username=username).exists():
-                messages.error(request, "A user with that username already exists.")
-            elif get_user_model().objects.filter(email=email).exists():
-                messages.error(request, "A get_user_model() with that email address already exists.")
-            else:
-                user = user_form.save()
-                login(request, user)
-                messages.success(request, "get_user_model() was successfully created.")
-                return redirect("complete-profile")
-    else:
-        user_form = UserForm()
-    context = {"user_form": user_form}
+    context = {
+        "page_title": "Lecturer registration",
+    }
     return render(request, "accounts/lecturer_signup.html", context)
 
 
 def sign_in(request):
-    login_form = LoginForm(request.POST or None)
+    form = LoginForm(request.POST or None)
+    msg = "Enter your credentials"
     if request.method == "POST":
-        if login_form.is_valid():
-            username = login_form.cleaned_data["username"]
-            password = login_form.cleaned_data["password"]
+        if form.is_valid():
+            username = form.cleaned_data.get("username").replace("/", "")
+            password = form.cleaned_data.get("password")
             user = authenticate(username=username, password=password)
             if user is not None:
-                login(request, user)
-                messages.success(request, "User was successfully logged in.")
-                return redirect("/dashboard")
+                if user.is_active:
+                    login(request, user, backend="accounts.authentication.EmailAuthBackend")
+                    messages.success(request, f"Login successful!")
+                    if "next" in request.POST:
+                        return redirect(request.POST.get("next"))
+                    else:
+                        return redirect("assignments:index")
+                else:
+                    messages.error(
+                        request,
+                        f"Login unsuccessful! Your account has not been activated.Activate your account via {reverse('accounts:resend_email')}",
+                    )
+                    msg = "Inactive account details"
             else:
-                messages.error(request, "Username or password is incorrect")
+                messages.error(request, f"No user with the provided details exists in our system.")
         else:
-            messages.error(request, "Form is not valid")
-    context = {"login": login_form}
-    return render(request, "accounts/sign_in.html", context=context)
+            messages.error(request, f"Error validating the form")
+            msg = "Error validating the form"
+    context = {
+        "form": form,
+        "page_title": "Sign in",
+        "msg": msg,
+        "section": "signin",
+    }
+    return render(request, "accounts/sign_in.html", context)
 
-    @login_required(login_url="sign_in")
+
+def validate_email(request):
+    email = request.POST.get("email", None)
+    validated_email = utils.validate_email(email)
+    res = JsonResponse({"success": True, "msg": "Valid e-mail address"})
+    if not validated_email["success"]:
+        res = JsonResponse({"success": False, "msg": validated_email["reason"]})
+    return res
 
 
+def validate_username(request):
+    username = request.POST.get("username", None).replace("/", "")
+    validated_username = utils.validate_username(username)
+    res = JsonResponse({"success": True, "msg": "Valid matriculation number."})
+    if not validated_username["success"]:
+        res = JsonResponse({"success": False, "msg": validated_username["reason"]})
+    return res
 
 
+def activate(request, uidb64, token):
+    try:
+        uid = force_text(urlsafe_base64_decode(uidb64))
+        user = get_user_model().objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError):
+        user = None
+    # checking if the user exists, if the token is valid.
+    if user is not None and account_activation_token.check_token(user, token):
+        # if valid set active true
+        user.is_active = True
+        user.save()
+        messages.success(
+            request, f"Your email has been verified successfully! You are now able to log in."
+        )
+        return redirect("accounts:sign_in")
+    else:
+        return render(request, "accounts/activation_invalid.html")
 
 
+def activation_sent_view(request):
+    return render(request, "accounts/activation_sent.html")
