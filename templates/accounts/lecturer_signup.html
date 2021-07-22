@@ -1,55 +1,182 @@
 {% extends "base.html" %}
-{% block title %}Create Account{% endblock %}
+<!---->
+{% load static %}
+<!---->
+{% block title %}{{page_title}}{% endblock %}
+<!---->
 {% block content%}
 
 <h4 id="signup-text">Create an Account</h4>
 <div class="form-container">
+  <div class="signup_form">
+    <form method="POST" action="" class="col s12" id="signup_form">
+      <div class="materialert error" id="materialAlert">
+        <div class="material-icons">report_problem</div>
+        <span id="alertText">Stop</span>
+        <button type="button" class="close-alert" id="closeAlert">×</button>
+      </div>
+      {% csrf_token %}
+      <div class="row">
+        <div class="input-field col s12">
+          <i class="material-icons prefix">email</i>
+          <label for="id_email"> Email* </label>
+          {{ form.email }}
+          <span class="helper-text email-error"></span>
+          {% if form.email.errors %}
+          <span class="helper-text email-error">{{form.email.errors}}</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col s6">
+          <i class="material-icons prefix">account_circle</i>
+          <label for="id_first_name"> First Name*</label>
+          {{ form.first_name }}
+          <!---->
+          {% if form.first_name.errors %}
+          <span class="helper-text">{{form.first_name.errors}}</span>
+          {% endif %}
+        </div>
+        <div class="input-field col s6">
+          <i class="material-icons prefix">account_circle</i>
+          <label for="id_last_name">Last Name*</label>
+          {{ form.last_name }}
+          <!---->
+          {% if form.last_name.errors %}
+          <span class="helper-text">{{form.last_name.errors}}</span>
+          {% endif %}
+        </div>
+      </div>
 
+      <div class="row">
+        <div class="input-field col s6">
+          <i class="material-icons prefix">school</i>
+          <label for="id_school">School* </label>
+          {{ form.school }}
+          <!---->
+          {% if form.school.errors %}
+          <span class="helper-text">{{form.school.errors}}</span>
+          {% endif %}
+        </div>
+        <div class="input-field col s6">
+          <i class="material-icons prefix">face</i>
+          <label for="id_gender">Gender* </label>
+          {{ form.gender }}
+          <!---->
+          {% if form.gender.errors %}
+          <span class="helper-text">{{form.gender.errors}}</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-field col s6">
+          <i class="material-icons prefix">vpn_key</i>
+          <label for="id_password1">Password* </label>
+          {{ form.password1 }}
+          <!---->
+          {% if form.password1.errors %}
+          <span class="helper-text">{{form.password1.errors}}</span>
+          {% endif %}
+          <!---->
+          <span class="helper-text">{{ form.password1.help_text }}</span>
+        </div>
+        <div class="input-field col s6">
+          <i class="material-icons prefix">vpn_key</i>
+          <label for="id_password2">Confirm password* </label>
+          {{ form.password2 }}
+          <!---->
+          {% if form.password2.errors %}
+          <span class="helper-text">{{form.password2.errors}}</span>
+          {% endif %}
+          <!---->
+        </div>
+      </div>
 
-    <!--    Student Sign Up-->
-
-    <div class="signup_form">
-        <form method="POST" action="">
-
-            {% csrf_token %}
-
-            <label for="first_name"> First Name*</label>
-            {{ user_form.first_name }}
-
-            <label for="last_name">Last Name*</label>
-            {{ user_form.last_name }}
-
-            <label for="username"> Matric No* </label>
-            {{ user_form.username }}
-
-            <label for="email"> Email* </label>
-            {{ user_form.email }}
-
-            <label for="password">Password* </label>
-
-            {{ user_form.password }}
-
-            <button class="btn waves-effect waves-light" type="submit" name="signup">Sign up
-                <i class="material-icons right">send</i>
-            </button>
-        </form>
-
-
-
-    </div>
-    <div class="signup-illustration">
-        <img src="../../static/img/sign-up-illustration.svg" alt="Sign up illustration">
-    </div>
-
-</div>
-<script>
-    {%
-        if message %}
-    Materialize.toast('{{ message }}', 2000, 'red');
-    {%
-        endif %
-    }
-</script>
+      <button
+        class="btn waves-effect waves-light btn-large disabled"
+        type="submit"
+        id="signup-btn"
+      >
+        <div class="loader" id="loader">
+          <div class="loading"></div>
+        </div>
+        Sign up
+        <i class="material-icons right">send</i>
+      </button>
+    </form>
+  </div>
+  <div class="signup-illustration">
+    <img
+      src="{% static 'img/sign-up-illustration.svg' %}"
+      alt="Sign up illustration"
+    />
+  </div>
 </div>
 
 {% endblock %}
+
+<!---->
+{% block js %}
+<script>
+  document.getElementById("materialAlert").style.display = "none";
+  const signUpForm = document.getElementById("signup_form");
+  const formElements = document.querySelectorAll(
+    "#signup_form  input, #signup_form  select"
+  );
+  signUpForm.addEventListener("keyup", (event) => {
+    let empty = false;
+    formElements.forEach((element) => {
+      if (element.value === "") {
+        empty = true;
+      }
+    });
+    if (signUpForm.password1.value !== signUpForm.password2.value) {
+      empty = true;
+    }
+    if (empty) {
+      $("#signup-btn").addClass("disabled");
+    } else {
+      $("#signup-btn").removeClass("disabled");
+    }
+  });
+
+  const validateEmail = function (email) {
+    var formData = new FormData();
+    formData.append("email", email);
+    $.ajax({
+      url: "{% url 'accounts:validate_lecturer_email' %}",
+      type: "POST",
+      dataType: "json",
+      cache: false,
+      processData: false,
+      contentType: false,
+      data: formData,
+      error: function (xhr) {
+        console.error(xhr.statusText);
+      },
+      success: function (res) {
+        if (!res.success) {
+          $(".email-error").css("color", "red");
+          $("#id_email").addClass("invalid");
+          $(".email-error").text(res.msg);
+        } else {
+          $(".email-error").css("color", "green");
+          $("#id_email").removeClass("invalid");
+          $("#id_email").addClass("valid");
+          $(".email-error").text(res.msg);
+        }
+      },
+    });
+  };
+  $("#id_email").on("keyup", (event) => {
+    event.preventDefault();
+    const email = event.target.value;
+    validateEmail(email);
+  });
+  $("#id_email").on("change", (event) => {
+    event.preventDefault();
+    const email = event.target.value;
+    validateEmail(email);
+  });
+</script>
+{% endblock js %}

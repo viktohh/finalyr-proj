@@ -31,6 +31,7 @@ class User(AbstractUser):
     level = models.CharField(choices=level_choices, max_length=11, null=True, blank=True)
     gender = models.CharField(choices=gender_choices, max_length=6)
     courses = models.ManyToManyField(Courses, blank=True)
+    has_logged_in = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.id)

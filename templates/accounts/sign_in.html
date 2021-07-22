@@ -9,27 +9,45 @@
 <div class="form-container">
   <!--  <h5 class="auth-header">Assignment Management System</h5>-->
   <div class="signin-form">
-    <form method="POST" action="">
+    <form method="POST" action="" id="loginForm">
       {% csrf_token %}
       <!---->
-      <h5>{{msg}}</h5>
-      {% for field in form %}
-      <label for="{{field.label}}">{{field.label}} </label>
-      {{ field }}
-      <!---->
-      {% endfor %}
+      <h5 style="text-align: ceneter">{{msg}}</h5>
+      <div class="row">
+        {% for field in form %}
+        <div class="input-field col s12">
+          {% if forloop.counter == 1 %}
+          <i class="material-icons prefix">email</i>
+          {% elif forloop.counter == 2 %}
+          <i class="material-icons prefix">vpn_key</i>
+          {% endif %}
+          <label for="id_{{field.label|lower}}"> {{field.label}}* </label>
+          {{ field }}
+          <!---->
+          {% if field.errors %}
+          <span class="helper-text email-error">{{field.errors}}</span>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+
       <!---->
       {% if request.GET.next %}
       <input type="hidden" name="next" value="{{request.GET.next}}" />
       {% endif %}
-      <button class="btn waves-effect waves-light" type="submit" name="login">
+      <button
+        class="btn waves-effect waves-light btn-large disabled"
+        type="submit"
+        name="login"
+        id="loginBtn"
+      >
         Log in
         <i class="material-icons right">send</i>
       </button>
     </form>
     <ul>
       <li class="forgot-password-link">
-        <a href="#"> Forgot password?</a>
+        <a href="{% url 'password_reset' %}"> Forgot password?</a>
       </li>
     </ul>
   </div>
@@ -42,3 +60,25 @@
 </div>
 
 {% endblock %}
+
+<!---->
+{% block js %}
+<script>
+  const loginForm = document.getElementById("loginForm");
+  const formElements = document.querySelectorAll("#loginForm  input");
+  loginForm.addEventListener("keyup", (event) => {
+    let empty = false;
+    formElements.forEach((element) => {
+      if (element.value === "") {
+        empty = true;
+      }
+    });
+
+    if (empty) {
+      $("#loginBtn").addClass("disabled");
+    } else {
+      $("#loginBtn").removeClass("disabled");
+    }
+  });
+</script>
+{% endblock js %}

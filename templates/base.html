@@ -77,9 +77,11 @@
       }
     </script>
     <script>
-      document.getElementById("closeAlert").addEventListener("click", () => {
-        document.getElementById("materialAlert").style.display = "none";
-      });
+      if (document.getElementById("closeAlert")) {
+        document.getElementById("closeAlert").addEventListener("click", () => {
+          document.getElementById("materialAlert").style.display = "none";
+        });
+      }
     </script>
     {% block js %}{% endblock js %}
   </body>

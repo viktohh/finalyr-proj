@@ -4,17 +4,14 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, get_user_model, login
 from django.contrib.sites.shortcuts import get_current_site
-from django.core import serializers
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
-from django.template.loader import render_to_string
 from django.urls.base import reverse
 from django.utils.encoding import force_bytes, force_text
-from django.utils.html import strip_tags
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
 from . import tasks, utils
-from .forms import LoginForm, StudentRegistrationForm
+from .forms import LecturerRegistrationForm, LoginForm, StudentRegistrationForm
 from .tokens import account_activation_token
 
 
@@ -28,11 +25,7 @@ def student_signup(request):
 
         if utils.is_valid_email(email):
             user = get_user_model().objects.create(email=post_data.get("email"))
-        print(
-            utils.is_password_validated(password, user),
-            utils.is_valid_username(username),
-            utils.is_valid_email(email),
-        )
+
         if utils.is_password_validated(password, user) and utils.is_valid_username(username):
             user.set_password(password)
             user.username = username
@@ -41,16 +34,12 @@ def student_signup(request):
             user.level = post_data.get("level")
             user.gender = post_data.get("gender")
             user.is_active = False
-
             user.is_student = True
-
             user.save()
-            current_site = str(get_current_site(request))
-            fullname = str(post_data.get("first_name")) + " " + str(post_data.get("last_name"))
             subject = "Please Activate Your Student Account"
             ctx = {
-                "fullname": fullname,
-                "domain": current_site,
+                "fullname": user.get_full_name(),
+                "domain": str(get_current_site(request)),
                 "uid": urlsafe_base64_encode(force_bytes(user.pk)),
                 "token": account_activation_token.make_token(user),
             }
@@ -60,14 +49,14 @@ def student_signup(request):
                     subject=subject,
                     template_name="accounts/activation_request.txt",
                     user_id=user.id,
-                    ctx=ctx,
+                    ctx=ctx
                 )
             else:
                 tasks.send_email_message.delay(
                     subject=subject,
                     template_name="accounts/activation_request.html",
                     user_id=user.id,
-                    ctx=ctx,
+                    ctx=ctx
                 )
             raw_password = password
             user = authenticate(username=username, password=raw_password)
@@ -91,11 +80,41 @@ def student_signup(request):
 
 
 def lecturer_signup(request):
-    context = {
-        "page_title": "Lecturer registration",
-    }
+    form = LecturerRegistrationForm(request.POST or None)
+    if request.method == "POST":
+        if form.is_valid():
+            email = form.cleaned_data.get("email")
+            password = form.cleaned_data.get("password1")
+            if not utils.is_valid_email_lecturer(email):
+                messages.error(request, "Email address is not recognized...")
+            else:
+                user = form.save(commit=False)
+                username = str(email.split("@")[0]) + str(utils.random_string_generator())
+                user.username = username
+                user.is_active = False
+                user.is_lecturer = True
+                user.save()
+                subject = "Please Activate Your Lecturer Account"
+                ctx = {
+                    "fullname": user.get_full_name(),
+                    "domain": str(get_current_site(request)),
+                    "uid": urlsafe_base64_encode(force_bytes(user.pk)),
+                    "token": account_activation_token.make_token(user),
+                }
+                if settings.DEBUG:
+                    tasks.send_email_message.delay(
+                        subject, "accounts/activation_request.txt", user.id, ctx
+                    )
+                else:
+                    tasks.send_email_message.delay(
+                        subject, "accounts/activation_request.html", user.id, ctx
+                    )
+                user = authenticate(username=username, password=password)
+                return redirect("accounts:activation_sent")
+        else:
+            messages.error(request, "Form is not valid. Make corrections and try again.")
+    context = {"page_title": "Lecturer registration", "form": form}
     return render(request, "accounts/lecturer_signup.html", context)
-
 
 def sign_in(request):
     form = LoginForm(request.POST or None)
@@ -136,6 +155,15 @@ def sign_in(request):
 def validate_email(request):
     email = request.POST.get("email", None)
     validated_email = utils.validate_email(email)
+    res = JsonResponse({"success": True, "msg": "Valid e-mail address"})
+    if not validated_email["success"]:
+        res = JsonResponse({"success": False, "msg": validated_email["reason"]})
+    return res
+
+
+def validate_lecturer_email(request):
+    email = request.POST.get("email", None)
+    validated_email = utils.validate_email_lecturer(email)
     res = JsonResponse({"success": True, "msg": "Valid e-mail address"})
     if not validated_email["success"]:
         res = JsonResponse({"success": False, "msg": validated_email["reason"]})

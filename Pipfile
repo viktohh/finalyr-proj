@@ -9,6 +9,9 @@ pillow = "*"
 django-extensions = "*"
 python-decouple = "*"
 celery = {extras = ["redis"], version = "*"}
+gunicorn = "*"
+whitenoise = "*"
+dj-database-url = "*"
 
 [dev-packages]
 

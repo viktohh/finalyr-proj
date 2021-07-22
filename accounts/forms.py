@@ -1,7 +1,8 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm
-from django.forms.models import ModelChoiceField
+
+from assignments.models import School
 
 
 class StudentRegistrationForm(UserCreationForm):
@@ -22,6 +23,27 @@ class StudentRegistrationForm(UserCreationForm):
             "username",
             "email",
             "level",
+            "gender",
+            "password1",
+            "password2",
+        )
+
+
+class LecturerRegistrationForm(UserCreationForm):
+    school = forms.ModelChoiceField(queryset=School.objects.all(), empty_label=None)
+
+    def __init__(self, *args, **kwargs):
+        super(LecturerRegistrationForm, self).__init__(*args, **kwargs)
+        for visible in self.visible_fields():
+            visible.field.widget.attrs["class"] = "validate"
+
+    class Meta:
+        model = get_user_model()
+        fields = (
+            "first_name",
+            "last_name",
+            "email",
+            "school",
             "gender",
             "password1",
             "password2",
