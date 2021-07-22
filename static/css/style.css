@@ -417,9 +417,14 @@ label {
     flex-grow: 1;
 }
 
-.center-content {
-    position: absolute;
-    top: 50%;
-    right: 50%;
-    transform: translate(50%, -50%);
+.content {
+    width: 90%;
+    min-height: 50vh;
+    margin: 5.3rem auto;
+}
+
+@media (min-width: 500px) {
+    .content {
+        max-width: 30rem;
+    }
 }
