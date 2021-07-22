@@ -177,7 +177,7 @@ else:
     EMAIL_USE_SSL = False
     EMAIL_PORT = 587
     EMAIL_HOST_USER = "timviktoh@gmail.com"
-    EMAIL_HOST_PASSWORD = "arlrejmxfhipoljz"
+    EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
     EMAIL_FROM = "Online Assignment System"
 
 DEFAULT_FROM_EMAIL = "timviktoh@gmail.com"
