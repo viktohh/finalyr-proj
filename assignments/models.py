@@ -1,8 +1,10 @@
 from django.conf import settings
 from django.db import models
+import uuid
 
 
 class School(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     school_name = models.CharField(max_length=200, null=True)
     school_code = models.CharField(max_length=10)
     date_time_created = models.DateTimeField(auto_now_add=True)
@@ -12,7 +14,7 @@ class School(models.Model):
 
 
 class Department(models.Model):
-
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     school = models.ForeignKey(School, on_delete=models.CASCADE)
     department_name = models.CharField(max_length=100)
     department_code = models.CharField(max_length=10)
@@ -23,7 +25,7 @@ class Department(models.Model):
 
 
 class Courses(models.Model):
-
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
     course_name = models.CharField(max_length=100)
     course_code = models.CharField(max_length=10)
@@ -34,6 +36,7 @@ class Courses(models.Model):
 
 
 class Assignment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=255)
     description = models.TextField()
     course = models.ForeignKey(Courses, on_delete=models.CASCADE)
@@ -51,6 +54,7 @@ class Assignment(models.Model):
 
 
 class Submission(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     matric_number = models.CharField(max_length=100)
     upload = models.FileField(upload_to="submissions/")
     submitted_at = models.DateField(auto_now_add=True)

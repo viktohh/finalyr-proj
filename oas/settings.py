@@ -80,24 +80,24 @@ WSGI_APPLICATION = "oas.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
-
-
 # DATABASES = {
 #     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": "test",  # os.environ.get('DB_NAME'),
-#         "USER": "postgres",  # os.environ.get("DB_USER"),
-#         "PASSWORD": "federal",  # os.environ.get("DB_PASSWORD"),
-#         "HOST": "localhost",  # config('DB_HOST'),
-#         "PORT": "",
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
 #     }
 # }
+
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "oas_db",  # os.environ.get('DB_NAME'),
+        "USER": "sirneij",  # os.environ.get("DB_USER"),
+        "PASSWORD": "herexcellency1",  # os.environ.get("DB_PASSWORD"),
+        "HOST": "localhost",  # config('DB_HOST'),
+        "PORT": "",
+    }
+}
 
 
 # Password validation
